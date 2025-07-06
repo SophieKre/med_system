@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres/db_name
+      - RABBITMQ_URL=amqp://user:pass@rabbitmq:5672//
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+
+  worker:
+    build: .
+    command: celery -A app.tasks.celery_app worker --loglevel=info -Q requests
+    volumes:
+      - .:/app
+    depends_on:
+      - rabbitmq
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres/db_name
+      - RABBITMQ_URL=amqp://user:pass@rabbitmq:5672//
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: pass
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db_name
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  flower:  # Мониторинг Celery
+    image: mher/flower
+    command: celery flower --broker=amqp://user:pass@rabbitmq:5672//
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
+
+volumes:
+  postgres_data:
