@@ -45,7 +45,7 @@ def analyze_symptoms(patient_id, symptoms):
     "urgency": 'error',
     "specialization":'error',
     "diagnosis": 'error',                # исправлено
-    "key_symptoms": 'error',              # это список
+    "key_symptoms": [],              # это список
     "doctor": 'error'
 }
 

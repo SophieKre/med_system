@@ -1,5 +1,5 @@
 from celery import Celery
-# from app.config import settings
+
 import os
 # celery_app = Celery(
 #     "tasks",
@@ -14,7 +14,7 @@ import os
 
 
 celery_app = Celery(
-    "medical_triage",
+    "app",
     broker=os.getenv("CELERY_BROKER", "redis://localhost:6379/0"),
     backend=os.getenv("CELERY_BACKEND", "redis://localhost:6379/0")
 )
