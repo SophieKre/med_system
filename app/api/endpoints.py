@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks
-from app.models.schemas import PatientRequest
-from app.tasks.process_request import process_patient_request
+from app.schemas import PatientRequest
+from app.tasks import process_patient_request
 
 router = APIRouter()
 

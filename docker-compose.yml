@@ -9,15 +9,13 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - rabbitmq
       - redis
       - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres/db_name
-      - RABBITMQ_URL=amqp://user:pass@rabbitmq:5672//
-      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 
   worker:
     build: .
@@ -25,24 +23,13 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - rabbitmq
       - redis
       - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres/db_name
-      - RABBITMQ_URL=amqp://user:pass@rabbitmq:5672//
-      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: pass
-    ports:
-      - "5672:5672"
-      - "15672:15672"
 
   redis:
     image: redis:alpine
@@ -60,13 +47,13 @@ services:
     ports:
       - "5432:5432"
 
-  flower:  # Мониторинг Celery
+  flower:
     image: mher/flower
-    command: celery flower --broker=amqp://user:pass@rabbitmq:5672//
+    command: celery --broker=redis://redis:6379/0 flower
     ports:
       - "5555:5555"
     depends_on:
-      - rabbitmq
+      - redis
 
 volumes:
   postgres_data:
